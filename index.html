@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regular Gifts</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Навигационное меню -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" data-tab="wheel">Колесо</button>
+            <button class="tab-btn" data-tab="profile">Профиль</button>
+        </div>
+
+        <!-- Страница с колесом -->
+        <div class="tab-content active" id="wheel-tab">
+            <div class="wheel-container">
+                <div class="wheel" id="fortune-wheel">
+                    <!-- Секции колеса будут добавлены через JavaScript -->
+                </div>
+                <div class="wheel-pointer"></div>
+                <button id="spin-btn" class="spin-button">Крутить колесо</button>
+            </div>
+            <div class="result-container" id="result-container" style="display:none;">
+                <h2>Ваш выигрыш:</h2>
+                <div id="prize-display">
+                    <img id="prize-image" src="" alt="Приз">
+                    <p id="prize-name"></p>
+                    <p id="prize-value">+<span id="stars-value">0</span> звезд</p>
+                </div>
+                <button id="continue-btn">Продолжить</button>
+            </div>
+        </div>
+
+        <!-- Страница профиля -->
+        <div class="tab-content" id="profile-tab">
+            <div class="profile-container">
+                <div class="profile-header">
+                    <div class="avatar-container">
+                        <img id="user-avatar" src="images/default-avatar.png" alt="Аватар">
+                    </div>
+                    <div class="user-info">
+                        <h2 id="user-name">Загрузка...</h2>
+                        <div class="balance">
+                            <img src="images/star.png" alt="Звезда" class="star-icon">
+                            <span id="user-stars">0</span> звезд
+                        </div>
+                    </div>
+                </div>
+                <div class="prizes-history">
+                    <h3>История выигрышей</h3>
+                    <ul id="prizes-list">
+                        <!-- История выигрышей будет добавлена через JavaScript -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="wheel.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
