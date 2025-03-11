@@ -12,49 +12,34 @@ const gifts = [
     { id: 10, name: "Кольцо", image: "💍", value: 75, color: "#607D8B", chance: 2 }
 ];
 
-// Полностью переработанная функция создания колеса с равными секциями
+// Простая и прямолинейная функция создания колеса
 function createWheel() {
     const wheel = document.getElementById('fortune-wheel');
     wheel.innerHTML = ''; // Очищаем содержимое
     
-    const numberOfSections = gifts.length;
-    const anglePerSection = 360 / numberOfSections; // Угол для каждой секции
+    const sections = gifts.length;
+    const angle = 360 / sections;
     
-    for (let i = 0; i < numberOfSections; i++) {
+    for (let i = 0; i < sections; i++) {
         const gift = gifts[i];
         
         // Создаем секцию
         const section = document.createElement('div');
         section.className = 'wheel-section';
         
-        // Маскируем секцию, чтобы был виден только сегмент
-        // Используем clip-path для создания сектора круга
-        const startAngle = i * anglePerSection;
-        const endAngle = (i + 1) * anglePerSection;
-        
-        // Применяем клиновидную форму и цвет
-        section.style.clipPath = `conic-gradient(from ${startAngle}deg to ${endAngle}deg, ${gift.color} 0%, ${gift.color} 100%, transparent 100%)`;
+        // Задаем цвет и повернутый угол
         section.style.backgroundColor = gift.color;
+        section.style.transform = `rotate(${i * angle}deg)`;
         
-        // Создаем контейнер для содержимого (эмодзи)
-        const content = document.createElement('div');
-        content.className = 'section-content';
+        // Добавляем эмодзи
+        const emoji = document.createElement('span');
+        emoji.className = 'emoji-icon';
+        emoji.textContent = gift.image;
         
-        // Поворачиваем контейнер, чтобы эмодзи были правильно ориентированы
-        content.style.transform = `rotate(${startAngle + anglePerSection/2}deg)`;
-        
-        // Создаем эмодзи
-        const emojiSpan = document.createElement('span');
-        emojiSpan.className = 'emoji-icon';
-        emojiSpan.textContent = gift.image;
-        
-        // Добавляем все в DOM
-        content.appendChild(emojiSpan);
-        section.appendChild(content);
+        // Добавляем элементы в DOM
+        section.appendChild(emoji);
         wheel.appendChild(section);
     }
-    
-    console.log(`Создано колесо с ${numberOfSections} секциями по ${anglePerSection}°`);
 }
 
 // Функция для вращения колеса
