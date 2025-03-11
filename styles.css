@@ -80,6 +80,49 @@ body {
     border: 4px solid #333;
 }
 
+/* Улучшенное колесо с равномерными секциями */
+.wheel-container {
+    position: relative;
+    width: 90%;
+    max-width: 320px;
+    margin: 20px auto;
+    text-align: center;
+}
+
+.wheel {
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%; /* Создаем квадрат */
+    position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 5s cubic-bezier(0.17, 0.67, 0.24, 0.99);
+    border: 4px solid #333;
+    transform-origin: center;
+}
+
+/* Каждая секция занимает весь круг, но виден только клиновидный сегмент */
+.wheel-section {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform-origin: center;
+}
+
+/* Содержимое секции (эмодзи) */
+.section-content {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 10%; /* Отступ от верхнего края колеса */
+}
+
 /* Секция колеса в виде кусочка пиццы */
 .wheel-section {
     position: absolute;
@@ -350,8 +393,8 @@ body {
 
 /* Стили для эмодзи */
 .emoji-icon {
-    font-size: 26px;
-    display: inline-block;
+    font-size: 28px;
+    transform-origin: center;
 }
 
 .large-emoji {
@@ -368,4 +411,19 @@ body {
     transform: none;
     position: static;
     margin-right: 10px;
+}
+
+/* Специальные стили для списка призов и меню */
+.prize-list-emoji {
+    position: static;
+    font-size: 24px;
+    margin-right: 15px;
+    transform: none;
+}
+
+/* Большой эмодзи для экрана результата */
+.large-emoji {
+    font-size: 80px;
+    line-height: 1;
+    margin: 0 auto 15px;
 }

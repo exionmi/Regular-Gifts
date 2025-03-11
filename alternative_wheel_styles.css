@@ -1,0 +1,97 @@
+/* Альтернативные стили для колеса - можно скопировать в styles.css */
+
+/* Вариант 1: Равные сектора с conic-gradient */
+.wheel {
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    border: 4px solid #333;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    transition: transform 5s cubic-bezier(0.17, 0.67, 0.24, 0.99);
+}
+
+.wheel-section {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform-origin: center;
+}
+
+.emoji-icon {
+    position: absolute;
+    font-size: 24px;
+    transform-origin: center;
+}
+
+/* Вариант 2: CSS-переменные для точного позиционирования */
+.wheel {
+    --wheel-size: 100%;
+    --wheel-slice-spacing: 0px;
+    --wheel-border-size: 4px;
+    --wheel-color: #333;
+    --neutral-color: white;
+    
+    width: var(--wheel-size);
+    height: 0;
+    padding-bottom: var(--wheel-size);
+    position: relative;
+    border-radius: 50%;
+    border: var(--wheel-border-size) solid var(--wheel-color);
+    overflow: hidden;
+    transition: transform 5s cubic-bezier(0.17, 0.67, 0.24, 0.99);
+}
+
+.wheel-section {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50%;
+    height: 50%;
+    transform-origin: 0% 100%;
+}
+
+.section-content {
+    position: absolute;
+    left: -100%;
+    width: 200%;
+    height: 200%;
+    text-align: center;
+    transform: skewY(60deg);
+    padding-top: 20px;
+}
+
+/* Вариант 3: Простой и надежный */
+.wheel {
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%;
+    border-radius: 50%;
+    border: 4px solid #333;
+    position: relative;
+    overflow: hidden;
+    transition: transform 5s cubic-bezier(0.17, 0.67, 0.24, 0.99);
+}
+
+.wheel-section {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 50%;
+    height: 50%;
+    transform-origin: top left;
+    border-radius: 0 0 100% 0;
+    box-sizing: border-box;
+}
+
+.emoji-icon {
+    position: absolute;
+    font-size: 24px;
+    bottom: 10%;
+    right: 10%;
+    transform: translate(50%, 50%) rotate(45deg);
+}
