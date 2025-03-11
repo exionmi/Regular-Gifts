@@ -58,97 +58,97 @@ function setupTabs() {
 function getUserData() {
     console.log("Получение данных пользователя...");
     
-    // Получение данных из Telegram WebApp
-    const user = tg.initDataUnsafe.user;
-    console.log("Данные пользователя из Telegram:", user);
+    // Получаем данные напрямую из Telegram Web App
+    const tgUser = tg.initDataUnsafe.user;
     
-    if (user) {
-        // Обновляем имя пользователя из Telegram
-        userData.id = user.id;
-        userData.name = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-        console.log("Имя пользователя:", userData.name);
+    if (tgUser) {
+        // Обновляем данные пользователя из Telegram
+        userData.id = tgUser.id;
+        userData.name = tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '');
         
-        // Для тестирования без сервера
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.log("Локальный режим, используем тестовые данные");
-            // Если мы в режиме тестирования, используем локальные данные
+        console.log('Telegram user data:', tgUser);
+        console.log('Полученное имя пользователя:', userData.name);
+        
+        // Для локального тестирования
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || !window.location.hostname) {
             updateProfileUI();
             return;
         }
         
+        // В случае ошибки связи с сервером, все равно обновляем интерфейс
+        updateProfileUI();
+        
         try {
-            // Получаем баланс и историю из БД
-            fetch(`/api/user-data?userId=${user.id}`)
-                .then(response => response.json())
+            // Запрос к API
+            fetch(`/api/user-data?userId=${tgUser.id}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    console.log("Данные с сервера:", data);
-                    userData.balance = data.balance;
-                    userData.prizes = data.prizes;
-                    updateProfileUI();
+                    // Обновляем данные пользователя
+                    if (data && typeof data === 'object') {
+                        userData.balance = data.balance || 0;
+                        userData.prizes = Array.isArray(data.prizes) ? data.prizes : [];
+                    }
+                    updateProfileUI(); // Обновляем интерфейс после получения данных
                 })
                 .catch(error => {
                     console.error('Error fetching user data:', error);
-                    // При ошибке все равно пытаемся отобразить интерфейс
+                    // При ошибке все равно показываем интерфейс
                     updateProfileUI();
                 });
         } catch (e) {
-            console.error("Ошибка при запросе к серверу:", e);
-            updateProfileUI();
+            console.error('Ошибка в запросе к серверу:', e);
         }
     } else {
-        console.log("Данные о пользователе не получены, используем значения по умолчанию");
+        console.warn('Данные пользователя из Telegram недоступны');
         updateProfileUI();
     }
 }
 
 // Функция для обновления UI профиля
 function updateProfileUI() {
-    console.log("Обновление интерфейса профиля...");
-    
     // Обновляем имя пользователя
-    const nameElement = document.getElementById('user-name');
-    nameElement.textContent = userData.name || "Гость";
-    
-    // Обновляем баланс
+    document.getElementById('user-name').textContent = userData.name || 'Гость';
     document.getElementById('user-stars').textContent = userData.balance;
     
-    // Получаем данные пользователя из Telegram
-    const user = tg.initDataUnsafe.user;
-    console.log("Данные пользователя при обновлении UI:", user);
-    
     // Обновляем аватар
-    const avatarContainer = document.querySelector('.avatar-container');
-    
-    if (user && user.photo_url) {
-        console.log("Аватар URL:", user.photo_url);
-        
-        // Если photo_url существует, используем его
-        const avatarImg = document.getElementById('user-avatar');
-        
-        // Создаем новый элемент изображения с обработчиками ошибок
-        const newAvatar = new Image();
-        newAvatar.id = 'user-avatar';
-        newAvatar.onload = function() {
-            // Если изображение загрузилось успешно, заменяем им текущее
-            avatarImg.src = newAvatar.src;
-        };
-        
-        newAvatar.onerror = function() {
-            console.log("Ошибка загрузки аватара, используем первую букву имени");
-            // Если изображение не загрузилось, создаем блок с первой буквой имени
-            createInitialsAvatar(avatarContainer);
-        };
-        
-        // Начинаем загрузку изображения
-        newAvatar.src = user.photo_url;
-    } else {
-        console.log("Photo_url не найден, используем заглушку");
-        // Если photo_url отсутствует, показываем первую букву имени
-        createInitialsAvatar(avatarContainer);
-    }
+    updateUserAvatar();
     
     // Обновляем историю выигрышей
     updatePrizesHistory();
+}
+
+// Функция для обновления аватара пользователя
+function updateUserAvatar() {
+    const avatarContainer = document.querySelector('.avatar-container');
+    const user = tg.initDataUnsafe.user;
+    
+    if (!avatarContainer) return;
+    
+    // Очищаем контейнер
+    avatarContainer.innerHTML = '';
+    
+    if (user && user.photo_url) {
+        // Создаем новый элемент img для аватара
+        const img = document.createElement('img');
+        img.id = 'user-avatar';
+        img.alt = 'Аватар';
+        img.src = user.photo_url;
+        
+        // Обработчик ошибки загрузки фото
+        img.onerror = function() {
+            createInitialsAvatar(avatarContainer);
+        };
+        
+        avatarContainer.appendChild(img);
+    } else {
+        // Создаем аватар с инициалами
+        createInitialsAvatar(avatarContainer);
+    }
 }
 
 // Функция для создания аватара из инициалов
@@ -168,40 +168,36 @@ function createInitialsAvatar(container) {
     container.appendChild(initialsDiv);
 }
 
-// Функция для обновления истории выигрышей
+// Функция для обновления истории выигрышей с использованием эмодзи
 function updatePrizesHistory() {
     const prizesList = document.getElementById('prizes-list');
+    if (!prizesList) return;
+    
     prizesList.innerHTML = ''; // Очищаем список
     
-    if (userData.prizes.length === 0) {
+    if (!userData.prizes || userData.prizes.length === 0) {
         const emptyItem = document.createElement('li');
         emptyItem.textContent = 'Вы еще не выиграли ни одного подарка';
         prizesList.appendChild(emptyItem);
         return;
     }
     
-    // Сортируем по дате (сначала новые)
-    userData.prizes.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
     // Создаем элементы для каждого выигрыша
     userData.prizes.forEach(prize => {
         const li = document.createElement('li');
         
-        const prizeIcon = document.createElement('img');
-        prizeIcon.classList.add('prize-icon');
-        
-        // Ищем соответствующий подарок в списке gifts
+        // Находим соответствующий подарок в массиве gifts
         const giftData = gifts.find(g => g.id === prize.giftId) || { 
-            image: "images/gifts/default.png", 
-            name: prize.name || "Подарок" 
+            image: "❓", 
+            name: prize.giftName || "Подарок" 
         };
         
-        prizeIcon.src = giftData.image;
-        prizeIcon.alt = giftData.name;
-        // При ошибке загрузки заменяем на стандартную иконку
-        prizeIcon.onerror = function() {
-            this.src = "images/gifts/default.png";
-        };
+        // Создаем элемент для эмодзи
+        const emojiSpan = document.createElement('span');
+        emojiSpan.classList.add('emoji-icon');
+        emojiSpan.style.position = 'static'; // Сбрасываем позицию для списка
+        emojiSpan.style.transform = 'none'; // Сбрасываем поворот
+        emojiSpan.textContent = giftData.image;
         
         const prizeInfo = document.createElement('div');
         prizeInfo.classList.add('prize-info');
@@ -220,7 +216,7 @@ function updatePrizesHistory() {
         prizeValue.classList.add('prize-stars');
         prizeValue.textContent = `+${prize.value}`;
         
-        li.appendChild(prizeIcon);
+        li.appendChild(emojiSpan);
         li.appendChild(prizeInfo);
         li.appendChild(prizeValue);
         
