@@ -15,13 +15,22 @@ const gifts = [
 // Функция для создания колеса
 function createWheel() {
     const wheel = document.getElementById('fortune-wheel');
+    // Очищаем колесо перед созданием
+    wheel.innerHTML = '';
+    
+    // Определяем угол для каждой секции - все секции одинакового размера
     const sectionAngle = 360 / gifts.length;
     
     gifts.forEach((gift, index) => {
         const section = document.createElement('div');
         section.classList.add('wheel-section');
+        
+        // Устанавливаем угол поворота для равномерного распределения
         section.style.transform = `rotate(${index * sectionAngle}deg)`;
         section.style.backgroundColor = gift.color;
+        
+        // Устанавливаем размер для всех секций, исходя из общего числа секций
+        section.style.clipPath = `conic-polygon(0 0, ${100 / gifts.length}% 0, 0 ${100}%)`;
         
         const content = document.createElement('div');
         content.classList.add('section-content');
@@ -56,17 +65,22 @@ function spinWheel() {
     const sectionAngle = 360 / gifts.length;
     const giftIndex = gifts.findIndex(gift => gift.id === selectedGift.id);
     
-    // Случайное количество полных оборотов + позиция приза
-    const rotations = 5; // Минимум 5 полных оборотов
-    const targetAngle = rotations * 360 + (giftIndex * sectionAngle);
+    // Гарантируем полный прокрут колеса - минимум 5 полных оборотов + позиция
+    const minRotations = 5; // Минимальное число полных оборотов
+    const maxExtraRotations = 3; // Максимальное дополнительное число оборотов для разнообразия
+    const extraRotations = Math.random() * maxExtraRotations;
+    const totalRotations = minRotations + extraRotations;
     
-    // Добавляем небольшое случайное смещение внутри ячейки
-    const randomOffset = Math.random() * (sectionAngle * 0.8);
-    const totalAngle = targetAngle + randomOffset;
+    // Целевой угол: полные обороты + позиция нужного сегмента
+    const targetAngle = totalRotations * 360 + (giftIndex * sectionAngle);
+    
+    // Добавляем небольшое случайное смещение в пределах сегмента для реалистичности
+    const randomOffset = Math.random() * (sectionAngle * 0.7);
+    const finalAngle = targetAngle + randomOffset;
     
     // Применяем вращение
     wheel.style.transition = 'transform 5s cubic-bezier(0.17, 0.67, 0.24, 0.99)';
-    wheel.style.transform = `rotate(${totalAngle}deg)`;
+    wheel.style.transform = `rotate(${finalAngle}deg)`;
     
     // После окончания вращения показываем результат
     setTimeout(() => {

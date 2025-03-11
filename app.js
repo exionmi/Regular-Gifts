@@ -56,6 +56,7 @@ function getUserData() {
     const user = tg.initDataUnsafe.user;
     
     if (user) {
+        // Обновляем имя пользователя из Telegram
         userData.id = user.id;
         userData.name = user.first_name + (user.last_name ? ' ' + user.last_name : '');
         
@@ -88,10 +89,14 @@ function updateProfileUI() {
     document.getElementById('user-name').textContent = userData.name;
     document.getElementById('user-stars').textContent = userData.balance;
     
-    // Обновляем аватар, если он доступен
-    const avatarUrl = tg.initDataUnsafe.user?.photo_url;
-    if (avatarUrl) {
-        document.getElementById('user-avatar').src = avatarUrl;
+    // Обновляем аватар прямо из Telegram WebApp
+    const user = tg.initDataUnsafe.user;
+    if (user && user.photo_url) {
+        const avatarImg = document.getElementById('user-avatar');
+        avatarImg.src = user.photo_url;
+        avatarImg.onerror = function() {
+            this.src = "images/default-avatar.png";
+        };
     }
     
     // Обновляем историю выигрышей

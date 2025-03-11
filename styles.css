@@ -58,7 +58,7 @@ body {
     display: block;
 }
 
-/* Колесо фортуны */
+/* Колесо фортуны - обновленные стили для равных секций */
 .wheel-container {
     position: relative;
     width: 90%;
@@ -76,11 +76,43 @@ body {
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     transition: transform 5s cubic-bezier(0.17, 0.67, 0.24, 0.99);
+    transform-origin: center;
+    border: 4px solid #333;
+}
+
+.wheel-section {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    transform-origin: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    clip-path: polygon(50% 50%, 100% 0, 50% 0);
+}
+
+.section-content {
+    position: absolute;
+    top: 15%;
+    left: 65%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.section-content img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
 }
 
 .wheel-pointer {
     position: absolute;
-    top: -10px;
+    top: -15px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
@@ -265,35 +297,6 @@ body {
 .prize-stars {
     color: #f5a623;
     font-weight: bold;
-}
-
-/* Секции колеса */
-.wheel-section {
-    position: absolute;
-    width: 50%;
-    height: 50%;
-    transform-origin: bottom right;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.section-content {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    transform: rotate(45deg);
-    padding-left: 20px;
-}
-
-.section-content img {
-    width: 40px;
-    height: 40px;
-    object-fit: contain;
 }
 
 /* Адаптивность для мобильных устройств */
