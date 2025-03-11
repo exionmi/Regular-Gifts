@@ -1,18 +1,18 @@
-// Определение подарков для колеса
+// Определение подарков для колеса с эмодзи
 const gifts = [
-    { id: 1, name: "Мишка", image: "images/gifts/bear.png", value: 10, color: "#FFD700", chance: 10 },
-    { id: 2, name: "Сердечко", image: "images/gifts/heart.png", value: 5, color: "#FF6B6B", chance: 15 },
-    { id: 3, name: "Подарок", image: "images/gifts/gift.png", value: 20, color: "#4CAF50", chance: 8 },
-    { id: 4, name: "Роза", image: "images/gifts/rose.png", value: 15, color: "#E91E63", chance: 10 },
-    { id: 5, name: "Цветы", image: "images/gifts/flowers.png", value: 25, color: "#9C27B0", chance: 7 },
-    { id: 6, name: "Шампанское", image: "images/gifts/champagne.png", value: 30, color: "#00BCD4", chance: 5 },
-    { id: 7, name: "Ракета", image: "images/gifts/rocket.png", value: 50, color: "#3F51B5", chance: 2 },
-    { id: 8, name: "Кубок", image: "images/gifts/cup.png", value: 40, color: "#FFC107", chance: 3 },
-    { id: 9, name: "Бриллиант", image: "images/gifts/diamond.png", value: 100, color: "#2196F3", chance: 1 },
-    { id: 10, name: "Кольцо", image: "images/gifts/ring.png", value: 75, color: "#607D8B", chance: 2 }
+    { id: 1, name: "Мишка", image: "🧸", value: 10, color: "#FFD700", chance: 10 },
+    { id: 2, name: "Сердечко", image: "💝", value: 5, color: "#FF6B6B", chance: 15 },
+    { id: 3, name: "Подарок", image: "🎁", value: 20, color: "#4CAF50", chance: 8 },
+    { id: 4, name: "Роза", image: "🌹", value: 15, color: "#E91E63", chance: 10 },
+    { id: 5, name: "Цветы", image: "💐", value: 25, color: "#9C27B0", chance: 7 },
+    { id: 6, name: "Шампанское", image: "🍾", value: 30, color: "#00BCD4", chance: 5 },
+    { id: 7, name: "Ракета", image: "🚀", value: 50, color: "#3F51B5", chance: 2 },
+    { id: 8, name: "Кубок", image: "🏆", value: 40, color: "#FFC107", chance: 3 },
+    { id: 9, name: "Алмаз", image: "💎", value: 100, color: "#2196F3", chance: 1 },
+    { id: 10, name: "Кольцо", image: "💍", value: 75, color: "#607D8B", chance: 2 }
 ];
 
-// Функция для создания колеса
+// Функция для создания колеса с эмодзи
 function createWheel() {
     const wheel = document.getElementById('fortune-wheel');
     // Очищаем колесо перед созданием
@@ -29,21 +29,15 @@ function createWheel() {
         section.style.transform = `rotate(${index * sectionAngle}deg)`;
         section.style.backgroundColor = gift.color;
         
-        // Устанавливаем размер для всех секций, исходя из общего числа секций
-        section.style.clipPath = `conic-polygon(0 0, ${100 / gifts.length}% 0, 0 ${100}%)`;
-        
         const content = document.createElement('div');
         content.classList.add('section-content');
         
-        const img = document.createElement('img');
-        img.src = gift.image;
-        img.alt = gift.name;
-        // При ошибке загрузки заменяем на стандартную иконку
-        img.onerror = function() {
-            this.src = "images/gifts/default.png";
-        };
+        // Используем span для эмодзи вместо img
+        const emojiSpan = document.createElement('span');
+        emojiSpan.classList.add('emoji-icon');
+        emojiSpan.textContent = gift.image;
         
-        content.appendChild(img);
+        content.appendChild(emojiSpan);
         section.appendChild(content);
         wheel.appendChild(section);
     });
@@ -113,18 +107,27 @@ function selectRandomGift() {
     return gifts[0];
 }
 
-// Функция для показа результата
+// Функция для показа результата с эмодзи
 function showResult(gift) {
     const resultContainer = document.getElementById('result-container');
     const prizeImage = document.getElementById('prize-image');
     const prizeName = document.getElementById('prize-name');
     const starsValue = document.getElementById('stars-value');
     
-    prizeImage.src = gift.image;
-    // При ошибке загрузки заменяем на стандартную иконку
-    prizeImage.onerror = function() {
-        this.src = "images/gifts/default.png";
-    };
+    // Если используем эмодзи, показываем его в большом размере
+    if (prizeImage.tagName === 'IMG') {
+        // Заменяем элемент img на span с эмодзи
+        const parent = prizeImage.parentNode;
+        const emojiSpan = document.createElement('span');
+        emojiSpan.id = 'prize-image';
+        emojiSpan.classList.add('large-emoji');
+        emojiSpan.textContent = gift.image;
+        parent.replaceChild(emojiSpan, prizeImage);
+    } else {
+        // Если элемент уже span, просто обновляем его содержимое
+        prizeImage.textContent = gift.image;
+    }
+    
     prizeName.textContent = gift.name;
     starsValue.textContent = gift.value;
     
