@@ -12,32 +12,37 @@ const gifts = [
     { id: 10, name: "Кольцо", image: "💍", value: 75, color: "#607D8B", chance: 2 }
 ];
 
-// Функция для создания колеса с эмодзи
+// Функция для создания колеса с эмодзи и равными секциями
 function createWheel() {
     const wheel = document.getElementById('fortune-wheel');
-    // Очищаем колесо перед созданием
     wheel.innerHTML = '';
     
-    // Определяем угол для каждой секции - все секции одинакового размера
-    const sectionAngle = 360 / gifts.length;
+    const sectionCount = gifts.length;
+    const sectionAngle = 360 / sectionCount;
     
     gifts.forEach((gift, index) => {
+        // Создаем секцию
         const section = document.createElement('div');
         section.classList.add('wheel-section');
         
-        // Устанавливаем угол поворота для равномерного распределения
+        // Применяем поворот и фон
         section.style.transform = `rotate(${index * sectionAngle}deg)`;
         section.style.backgroundColor = gift.color;
         
+        // Создаем треугольную форму сектора
+        section.style.clipPath = 'polygon(0 0, 100% 0, 0 100%)';
+        
+        // Создаем контент секции
         const content = document.createElement('div');
         content.classList.add('section-content');
         
-        // Используем span для эмодзи вместо img
-        const emojiSpan = document.createElement('span');
-        emojiSpan.classList.add('emoji-icon');
-        emojiSpan.textContent = gift.image;
+        // Создаем эмодзи
+        const emoji = document.createElement('span');
+        emoji.classList.add('emoji-icon');
+        emoji.textContent = gift.image;
         
-        content.appendChild(emojiSpan);
+        // Добавляем эмодзи в секцию
+        content.appendChild(emoji);
         section.appendChild(content);
         wheel.appendChild(section);
     });
@@ -140,15 +145,30 @@ function showResult(gift) {
     };
 }
 
-// Функция для отправки результата на сервер
+// Функция для отправки результата на сервер и обновления баланса
 function sendResult(gift) {
     // Получаем данные пользователя из Telegram
     const user = window.Telegram.WebApp.initDataUnsafe.user;
     
     if (!user) {
         console.error('Не удалось получить данные пользователя Telegram');
+        
+        // Даже если не удалось отправить на сервер, обновляем локальный баланс
+        userData.balance += gift.value;
+        userData.prizes.unshift({
+            giftId: gift.id,
+            giftName: gift.name,
+            value: gift.value,
+            date: new Date().toISOString()
+        });
+        
+        // Обновляем UI
+        updateProfileUI();
         return;
     }
+    
+    console.log('Отправка результата на сервер для пользователя:', user.id);
+    console.log('Выбранный подарок:', gift);
     
     try {
         fetch('/api/save-result', {
@@ -163,10 +183,16 @@ function sendResult(gift) {
                 giftName: gift.name
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Ошибка HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             console.log('Результат успешно сохранен:', data);
-            // При успешном сохранении обновляем локальные данные
+            
+            // Обновляем локальные данные
             userData.balance += gift.value;
             userData.prizes.unshift({
                 giftId: gift.id,
@@ -174,10 +200,14 @@ function sendResult(gift) {
                 value: gift.value,
                 date: new Date().toISOString()
             });
+            
+            // Обновляем интерфейс после успешного сохранения
+            updateProfileUI();
         })
         .catch(error => {
             console.error('Ошибка при сохранении результата:', error);
-            // Для тестирования без сервера или при ошибке просто обновим локальные данные
+            
+            // При ошибке все равно обновляем локальные данные
             userData.balance += gift.value;
             userData.prizes.unshift({
                 giftId: gift.id,
@@ -185,10 +215,14 @@ function sendResult(gift) {
                 value: gift.value,
                 date: new Date().toISOString()
             });
+            
+            // Обновляем интерфейс
+            updateProfileUI();
         });
     } catch (e) {
         console.error('Общая ошибка при отправке результата:', e);
-        // Для тестирования без сервера или при ошибке просто обновим локальные данные
+        
+        // При ошибке все равно обновляем локальные данные
         userData.balance += gift.value;
         userData.prizes.unshift({
             giftId: gift.id,
@@ -196,5 +230,8 @@ function sendResult(gift) {
             value: gift.value,
             date: new Date().toISOString()
         });
+        
+        // Обновляем интерфейс
+        updateProfileUI();
     }
 }

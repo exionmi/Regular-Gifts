@@ -80,14 +80,15 @@ body {
     border: 4px solid #333;
 }
 
+/* Ключевое изменение: новая структура секций */
 .wheel-section {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 50%;
+    left: 50%;
     width: 50%;
     height: 50%;
-    transform-origin: bottom right;
-    overflow: hidden;
+    transform-origin: 0 0;
+    /* Изменено для точного построения секторов */
 }
 
 .section-content {
@@ -100,12 +101,13 @@ body {
     text-align: center;
 }
 
+/* Стиль эмодзи в колесе */
 .emoji-icon {
-    font-size: 24px;
-    transform: rotate(-45deg);
+    font-size: 26px;
     position: absolute;
+    left: 65%;
     top: 30%;
-    left: 60%;
+    transform: translate(-50%, -50%);
 }
 
 .wheel-pointer {
@@ -358,7 +360,7 @@ body {
 
 /* Стили для эмодзи */
 .emoji-icon {
-    font-size: 24px;
+    font-size: 26px;
     display: inline-block;
 }
 
@@ -367,4 +369,13 @@ body {
     display: block;
     margin-bottom: 15px;
     line-height: 1.2;
+}
+
+/* Эмодзи в списке призов */
+.prize-list-emoji {
+    font-size: 24px;
+    display: inline-block;
+    transform: none;
+    position: static;
+    margin-right: 10px;
 }
