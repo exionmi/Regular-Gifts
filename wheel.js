@@ -12,38 +12,35 @@ const gifts = [
     { id: 10, name: "Кольцо", image: "💍", value: 75, color: "#607D8B", chance: 2 }
 ];
 
-// Функция для создания колеса с эмодзи и равными секциями
+// Функция для создания колеса в виде пиццы
 function createWheel() {
     const wheel = document.getElementById('fortune-wheel');
     wheel.innerHTML = '';
     
-    const sectionCount = gifts.length;
-    const sectionAngle = 360 / sectionCount;
+    const numberOfSections = gifts.length;
+    const anglePerSection = 360 / numberOfSections;
     
     gifts.forEach((gift, index) => {
-        // Создаем секцию
+        // Создаем секцию колеса
         const section = document.createElement('div');
         section.classList.add('wheel-section');
         
-        // Применяем поворот и фон
-        section.style.transform = `rotate(${index * sectionAngle}deg)`;
+        // Устанавливаем фон секции
         section.style.backgroundColor = gift.color;
         
-        // Создаем треугольную форму сектора
-        section.style.clipPath = 'polygon(0 0, 100% 0, 0 100%)';
+        // Поворачиваем секцию для равномерного распределения по кругу
+        section.style.transform = `rotate(${index * anglePerSection}deg)`;
         
-        // Создаем контент секции
-        const content = document.createElement('div');
-        content.classList.add('section-content');
-        
-        // Создаем эмодзи
-        const emoji = document.createElement('span');
-        emoji.classList.add('emoji-icon');
-        emoji.textContent = gift.image;
+        // Создаем контейнер для эмодзи
+        const emojiContainer = document.createElement('span');
+        emojiContainer.classList.add('emoji-icon');
+        emojiContainer.textContent = gift.image;
+        emojiContainer.style.transform = `rotate(${index * anglePerSection / 2}deg)`;
         
         // Добавляем эмодзи в секцию
-        content.appendChild(emoji);
-        section.appendChild(content);
+        section.appendChild(emojiContainer);
+        
+        // Добавляем секцию в колесо
         wheel.appendChild(section);
     });
 }

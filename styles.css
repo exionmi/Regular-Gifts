@@ -80,33 +80,23 @@ body {
     border: 4px solid #333;
 }
 
-/* Ключевое изменение: новая структура секций */
+/* Секция колеса в виде кусочка пиццы */
 .wheel-section {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 50%;
-    height: 50%;
-    transform-origin: 0 0;
-    /* Изменено для точного построения секторов */
-}
-
-.section-content {
-    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+    clip-path: polygon(50% 50%, 100% 0%, 50% 0%);
+    transform-origin: center;
 }
 
-/* Стиль эмодзи в колесе */
+/* Эмодзи внутри секции */
 .emoji-icon {
-    font-size: 26px;
     position: absolute;
-    left: 65%;
-    top: 30%;
+    font-size: 24px;
+    top: 20%;
+    left: 70%;
     transform: translate(-50%, -50%);
 }
 
