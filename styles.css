@@ -463,8 +463,8 @@ body {
 .emoji-icon {
     position: absolute;
     font-size: 26px;
-    top: 20%;
-    left: 75%;
+    top: 16%;
+    left: 63%;
     transform: translate(-50%, -50%);
 }
 

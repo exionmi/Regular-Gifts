@@ -58,73 +58,74 @@ function setupTabs() {
 function getUserData() {
     console.log("Получение данных пользователя из Telegram WebApp");
     
-    try {
-        // Прямой доступ к данным Telegram
-        const tgData = window.Telegram.WebApp.initDataUnsafe;
-        console.log("Полученные данные WebApp:", tgData);
+    // Инициализация данных Telegram
+    const tg = window.Telegram.WebApp;
+    
+    // Отладочная информация
+    console.log("Telegram WebApp доступен:", !!tg);
+    console.log("Telegram initData:", tg.initData);
+    console.log("Telegram initDataUnsafe:", tg.initDataUnsafe);
+    
+    // Получаем данные пользователя
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const user = tg.initDataUnsafe.user;
+        console.log("Данные пользователя из Telegram:", user);
         
-        if (tgData && tgData.user) {
-            const user = tgData.user;
-            console.log("Данные пользователя:", user);
-            
-            // Обновляем локальные данные
-            userData.id = user.id;
-            userData.name = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-            
-            // Немедленно обновляем интерфейс с данными из Telegram
-            document.getElementById('user-name').textContent = userData.name;
-            
-            // Обновляем аватар
-            if (user.photo_url) {
-                const avatarImg = document.getElementById('user-avatar');
-                if (avatarImg) {
-                    avatarImg.src = user.photo_url;
-                    console.log("Аватар пользователя установлен:", user.photo_url);
-                }
-            } else {
-                console.log("Аватар пользователя недоступен, используем инициалы");
-                createInitialsAvatar(document.querySelector('.avatar-container'));
-            }
-            
-            // Теперь пробуем получить данные с сервера
-            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                console.log("Запрос баланса с сервера для пользователя:", user.id);
-                
-                fetch(`/api/user-data?userId=${user.id}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log("Получены данные с сервера:", data);
-                        if (data) {
-                            userData.balance = data.balance || 0;
-                            userData.prizes = Array.isArray(data.prizes) ? data.prizes : [];
-                            
-                            // Обновляем интерфейс с серверными данными
-                            document.getElementById('user-stars').textContent = userData.balance;
-                            updatePrizesHistory();
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Ошибка получения данных с сервера:", error);
-                    });
+        // Получаем имя пользователя
+        userData.id = user.id;
+        userData.name = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+        
+        // Обновляем имя пользователя в UI
+        const nameElement = document.getElementById('user-name');
+        if (nameElement) {
+            nameElement.textContent = userData.name;
+        }
+        
+        // Обновляем аватар пользователя
+        if (user.photo_url) {
+            const avatarElement = document.getElementById('user-avatar');
+            if (avatarElement) {
+                avatarElement.src = user.photo_url;
+                console.log("Установлен аватар из Telegram:", user.photo_url);
             }
         } else {
-            console.warn("Данные пользователя не найдены в Telegram WebApp");
-            document.getElementById('user-name').textContent = "Гость";
-            createInitialsAvatar(document.querySelector('.avatar-container'));
+            console.log("Аватар пользователя недоступен, используем заглушку");
         }
-    } catch (error) {
-        console.error("Ошибка при получении данных пользователя:", error);
-        document.getElementById('user-name').textContent = "Гость";
+        
+        // Получаем данные с сервера
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            console.log("Запрос данных пользователя с сервера, ID:", user.id);
+            
+            fetch(`/api/user-data?userId=${user.id}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Получены данные с сервера:", data);
+                    if (data) {
+                        userData.balance = data.balance || 0;
+                        userData.prizes = Array.isArray(data.prizes) ? data.prizes : [];
+                        
+                        // Обновляем баланс
+                        const balanceElement = document.getElementById('user-stars');
+                        if (balanceElement) {
+                            balanceElement.textContent = userData.balance;
+                        }
+                        
+                        // Обновляем историю призов
+                        updatePrizesHistory();
+                    }
+                })
+                .catch(error => {
+                    console.error("Ошибка при получении данных с сервера:", error);
+                });
+        } else {
+            console.log("Локальный режим, не отправляем запрос на сервер");
+        }
+    } else {
+        console.warn("Не удалось получить данные пользователя из Telegram WebApp");
     }
-    
-    // Обновляем отображение призов и баланса
-    document.getElementById('user-stars').textContent = userData.balance;
-    updatePrizesHistory();
 }
 
 // Функция для обновления UI профиля
