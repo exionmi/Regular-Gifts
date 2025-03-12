@@ -54,78 +54,129 @@ function setupTabs() {
     });
 }
 
-// Улучшенная функция получения данных пользователя
+// Улучшенная функция получения данных пользователя с использованием Python API
 function getUserData() {
-    console.log("Получение данных пользователя из Telegram WebApp");
+    console.log("Получение данных пользователя через Python API");
     
-    // Инициализация данных Telegram
+    // Получаем данные инициализации из Telegram WebApp
     const tg = window.Telegram.WebApp;
     
-    // Отладочная информация
     console.log("Telegram WebApp доступен:", !!tg);
-    console.log("Telegram initData:", tg.initData);
-    console.log("Telegram initDataUnsafe:", tg.initDataUnsafe);
+    console.log("Начало получения данных профиля через Python API");
     
-    // Получаем данные пользователя
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        const user = tg.initDataUnsafe.user;
-        console.log("Данные пользователя из Telegram:", user);
+    // Проверяем доступность initData
+    if (!tg.initData) {
+        console.warn("initData отсутствует, невозможно получить профиль через Python API");
+        updateProfileUI(); // Показываем профиль с данными по умолчанию
+        return;
+    }
+    
+    // Отправляем запрос на сервер для получения полного профиля
+    fetch('/api/telegram/get-profile', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            init_data: tg.initData
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ошибка! Статус: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Получены данные профиля:", data);
         
-        // Получаем имя пользователя
-        userData.id = user.id;
-        userData.name = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+        // Обновляем локальные данные пользователя
+        if (data.telegram) {
+            userData.id = data.telegram.user_id;
+            userData.name = data.telegram.first_name + 
+                (data.telegram.last_name ? ' ' + data.telegram.last_name : '');
+            
+            // Обновляем данные приложения
+            if (data.app_data) {
+                userData.balance = data.app_data.balance || 0;
+                userData.prizes = Array.isArray(data.app_data.prizes) ? 
+                    data.app_data.prizes : [];
+            }
+            
+            // Обновляем UI с полученными данными
+            updateProfileWithServerData(data);
+        }
+    })
+    .catch(error => {
+        console.error("Ошибка при получении профиля:", error);
         
-        // Обновляем имя пользователя в UI
+        // Пытаемся получить хотя бы аватар
+        tryGetAvatarSeparately();
+        
+        // Все равно показываем профиль
+        updateProfileUI();
+    });
+}
+
+// Функция для обновления профиля с данными с сервера
+function updateProfileWithServerData(profileData) {
+    // Обновляем имя пользователя
+    if (profileData.telegram) {
         const nameElement = document.getElementById('user-name');
         if (nameElement) {
             nameElement.textContent = userData.name;
         }
         
-        // Обновляем аватар пользователя
-        if (user.photo_url) {
+        // Обновляем аватар
+        if (profileData.telegram.photo_url) {
             const avatarElement = document.getElementById('user-avatar');
             if (avatarElement) {
-                avatarElement.src = user.photo_url;
-                console.log("Установлен аватар из Telegram:", user.photo_url);
+                avatarElement.src = profileData.telegram.photo_url;
+                console.log("Установлен аватар из Python API:", profileData.telegram.photo_url);
             }
-        } else {
-            console.log("Аватар пользователя недоступен, используем заглушку");
+        }
+    }
+    
+    // Обновляем данные приложения
+    if (profileData.app_data) {
+        const balanceElement = document.getElementById('user-stars');
+        if (balanceElement) {
+            balanceElement.textContent = profileData.app_data.balance || 0;
         }
         
-        // Получаем данные с сервера
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            console.log("Запрос данных пользователя с сервера, ID:", user.id);
-            
-            fetch(`/api/user-data?userId=${user.id}`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("Получены данные с сервера:", data);
-                    if (data) {
-                        userData.balance = data.balance || 0;
-                        userData.prizes = Array.isArray(data.prizes) ? data.prizes : [];
-                        
-                        // Обновляем баланс
-                        const balanceElement = document.getElementById('user-stars');
-                        if (balanceElement) {
-                            balanceElement.textContent = userData.balance;
-                        }
-                        
-                        // Обновляем историю призов
-                        updatePrizesHistory();
-                    }
-                })
-                .catch(error => {
-                    console.error("Ошибка при получении данных с сервера:", error);
-                });
-        } else {
-            console.log("Локальный режим, не отправляем запрос на сервер");
-        }
-    } else {
-        console.warn("Не удалось получить данные пользователя из Telegram WebApp");
+        // Обновляем историю призов
+        updatePrizesHistory();
     }
+}
+
+// Функция для отдельного запроса аватара
+function tryGetAvatarSeparately() {
+    const tg = window.Telegram.WebApp;
+    
+    if (!tg.initData) return;
+    
+    fetch('/api/telegram/get-avatar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            init_data: tg.initData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.photo_url) {
+            const avatarElement = document.getElementById('user-avatar');
+            if (avatarElement) {
+                avatarElement.src = data.photo_url;
+                console.log("Установлен аватар из отдельного запроса:", data.photo_url);
+            }
+        }
+    })
+    .catch(error => {
+        console.error("Ошибка при получении аватара:", error);
+    });
 }
 
 // Функция для обновления UI профиля
