@@ -42,7 +42,7 @@ function createWheel() {
     }
 }
 
-// Функция для вращения колеса, чтобы приз соответствовал тому, на чем остановилась стрелка
+// Функция для вращения колеса
 function spinWheel() {
     const wheel = document.getElementById('fortune-wheel');
     const spinButton = document.getElementById('spin-btn');
@@ -51,41 +51,39 @@ function spinWheel() {
     spinButton.disabled = true;
     spinButton.textContent = 'Крутится...';
     
-    // Определяем случайный угол вращения (много оборотов + случайное положение)
-    const minRotations = 5;  // минимум полных оборотов
-    const maxExtraRotations = 3; // дополнительные обороты для разнообразия
-    const randomRotations = minRotations + Math.random() * maxExtraRotations;
-    const randomAngle = Math.floor(Math.random() * 360); // Случайный угол в градусах
-    const totalAngle = randomRotations * 360 + randomAngle;
+    // Выбираем случайный подарок с учетом вероятностей
+    const selectedGift = selectRandomGift();
+    
+    // Вычисляем угол для вращения
+    const sectionAngle = 360 / gifts.length;
+    const giftIndex = gifts.findIndex(gift => gift.id === selectedGift.id);
+    
+    // Гарантируем полный прокрут колеса - минимум 5 полных оборотов + позиция
+    const minRotations = 5; // Минимальное число полных оборотов
+    const maxExtraRotations = 3; // Максимальное дополнительное число оборотов для разнообразия
+    const extraRotations = Math.random() * maxExtraRotations;
+    const totalRotations = minRotations + extraRotations;
+    
+    // Целевой угол: полные обороты + позиция нужного сегмента
+    const targetAngle = totalRotations * 360 + (giftIndex * sectionAngle);
+    
+    // Добавляем небольшое случайное смещение в пределах сегмента для реалистичности
+    const randomOffset = Math.random() * (sectionAngle * 0.7);
+    const finalAngle = targetAngle + randomOffset;
     
     // Применяем вращение
     wheel.style.transition = 'transform 5s cubic-bezier(0.17, 0.67, 0.24, 0.99)';
-    wheel.style.transform = `rotate(${totalAngle}deg)`;
+    wheel.style.transform = `rotate(${finalAngle}deg)`;
     
-    // После окончания вращения определяем, какой приз выпал (на что указывает стрелка)
+    // После окончания вращения показываем результат
     setTimeout(() => {
-        // Определяем выпавший приз по конечному углу (с учетом положения стрелки)
-        const finalAngle = totalAngle % 360;
-        const normalizedAngle = (360 - finalAngle) % 360; // Нормализуем угол для расчета сегмента
-        const sectionAngle = 360 / gifts.length;
-        
-        // Определяем индекс выпавшего приза
-        const sectionIndex = Math.floor(normalizedAngle / sectionAngle);
-        const selectedGift = gifts[sectionIndex];
-        
-        console.log(`Колесо остановилось на угле ${finalAngle}°, нормализованный угол: ${normalizedAngle}°`);
-        console.log(`Выпал приз: ${selectedGift.name} (индекс: ${sectionIndex}, угол секции: ${sectionAngle}°)`);
-        
-        // Показываем результат
         showResult(selectedGift);
-        
-        // Отправляем результат на сервер
-        sendResult(selectedGift);
-        
-        // Возвращаем кнопку в активное состояние
         spinButton.disabled = false;
         spinButton.textContent = 'Крутить колесо';
-    }, 5000); // 5 секунд на вращение
+    }, 5000);
+    
+    // Отправляем результат на сервер
+    sendResult(selectedGift);
 }
 
 // Функция для выбора случайного подарка с учетом шансов

@@ -7,8 +7,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Regular Gifts</title>
+    <!-- Подключаем тестовый режим перед Telegram WebApp (закомментируйте для реальной работы в Telegram) -->
+    <script src="test-mode.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
     <div class="app-container">
@@ -63,8 +65,9 @@
             </div>
         </div>
     </div>
-    <script src="wheel.js"></script>
-    <script src="app.js"></script>
+    <!-- Подключаем скрипты -->
+    <script src="wheel.js?v=2"></script>
+    <script src="app.js?v=2"></script>
     <script src="telegram_debug.js"></script>
 </body>
 </html>
