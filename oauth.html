@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизация в Regular Gifts</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 50px;
+        }
+        h1 {
+            color: #0088cc;
+        }
+        p {
+            margin: 20px 0;
+            line-height: 1.5;
+        }
+        .telegram-button {
+            display: inline-block;
+            background-color: #0088cc;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 20px;
+            border: none;
+            cursor: pointer;
+        }
+        .notice {
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Regular Gifts</h1>
+        <p>Для доступа к приложению используйте Telegram бота</p>
+        
+        <a href="https://t.me/your_bot_username" class="telegram-button">
+            Открыть в Telegram
+        </a>
+        
+        <div class="notice">
+            <p>Это приложение работает только в Telegram WebApp.<br>
+            Пожалуйста, откройте его через бота в Telegram.</p>
+        </div>
+        
+        <script>
+            // Проверяем, есть ли URL параметр для прямого входа
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('user_id');
+            
+            if (userId) {
+                // Если есть ID пользователя, переадресуем на автоматический вход
+                window.location.href = `https://t.me/your_bot_username/app?startapp=user_${userId}`;
+            }
+            
+            // Для разработчиков: кнопка для теста
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                document.write(`
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        <h3>Режим разработчика</h3>
+                        <button onclick="window.location.href='index.html?test=true'" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Открыть приложение в тестовом режиме
+                        </button>
+                    </div>
+                `);
+            }
+        </script>
+    </div>
+</body>
+</html>

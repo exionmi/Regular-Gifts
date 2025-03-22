@@ -1,24 +1,6 @@
-// Инициализация Telegram WebApp и переменных для хранения данных
+// Глобальные переменные
 let tg;
-try {
-    tg = window.Telegram.WebApp;
-    if (tg) {
-        tg.expand();
-        console.log("Telegram WebApp инициализирован");
-        
-        // Проверяем доступность initData
-        if (!tg.initData || tg.initData.length < 10) {
-            console.warn("Отсутствует initData или он недействителен");
-        } else {
-            console.log("initData доступен, длина:", tg.initData.length);
-        }
-    } else {
-        console.error("Telegram WebApp недоступен");
-    }
-} catch (e) {
-    console.error("Ошибка при инициализации Telegram WebApp:", e);
-    tg = null;
-}
+let initDataAvailable = false;
 
 // Переменные для хранения данных пользователя
 let userData = {
@@ -29,12 +11,59 @@ let userData = {
     prizes: []
 };
 
-// Инициализация приложения
-document.addEventListener("DOMContentLoaded", function() {
-    // Создаем колесо
-    createWheel();
+// Инициализация Telegram WebApp с корректной обработкой готовности
+function initTelegramWebApp() {
+    console.log("Инициализация Telegram WebApp...");
     
-    // Настраиваем обработчики вкладок
+    try {
+        // Получаем объект Telegram WebApp
+        tg = window.Telegram.WebApp;
+        
+        if (!tg) {
+            console.error("Telegram WebApp не доступен! Возможно, приложение открыто не в Telegram.");
+            return false;
+        }
+        
+        // Регистрируем обработчик события готовности
+        tg.onReady(function() {
+            console.log("Telegram WebApp готов к использованию");
+            
+            // Проверяем доступность initData после готовности WebApp
+            if (tg.initData && tg.initData.length > 10) {
+                console.log("initData доступен:", tg.initData.substring(0, 30) + "...");
+                initDataAvailable = true;
+            } else {
+                console.warn("initData недоступен или некорректен");
+                console.warn("Длина initData:", tg.initData ? tg.initData.length : 0);
+            }
+            
+            // Получаем данные пользователя после готовности WebApp
+            getUserDataFromTelegram();
+            
+            // Получаем профиль через API только если initData доступен
+            if (initDataAvailable) {
+                tryToGetProfileFromBotAPI();
+            } else {
+                console.warn("Пропускаем запрос профиля из-за отсутствия initData");
+            }
+            
+            // Расширяем окно WebApp
+            tg.expand();
+        });
+        
+        return true;
+    } catch (e) {
+        console.error("Ошибка при инициализации Telegram WebApp:", e);
+        return false;
+    }
+}
+
+// Обработчик загрузки страницы
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("DOM загружен, инициализация приложения...");
+    
+    // Создаем колесо и настраиваем UI
+    createWheel();
     setupTabs();
     
     // Настраиваем кнопку вращения
@@ -45,30 +74,23 @@ document.addEventListener("DOMContentLoaded", function() {
         console.error("Кнопка вращения не найдена в DOM");
     }
     
-    // Получаем данные пользователя
-    getUserDataFromTelegram();
-    
-    // Пробуем получить данные через API только если работаем в Telegram
-    if (tg && tg.initData && tg.initData.length > 10) {
-        tryToGetProfileFromBotAPI();
-    } else {
-        console.log("Режим тестирования, не вызываем API профиля");
-        // В тестовом режиме можем задать тестовые данные
-        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const user = tg.initDataUnsafe.user;
-            userData.id = user.id;
-            userData.name = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-            userData.username = user.username || "NoUsername";
-            
-            // Добавляем тестовые призы
-            userData.prizes = [
-                {giftId: 1, giftName: "Мишка", value: 10, date: new Date().toISOString()},
-                {giftId: 2, giftName: "Сердечко", value: 5, date: new Date().toISOString()}
-            ];
-            
-            // Обновляем UI
-            updateProfileUI();
-        }
+    // Инициализируем Telegram WebApp
+    if (!initTelegramWebApp()) {
+        console.warn("Запуск в автономном режиме без Telegram...");
+        
+        // Установка тестовых данных в автономном режиме
+        userData = {
+            id: 12345678,
+            name: "Тестовый пользователь",
+            username: "test_user",
+            balance: 100,
+            prizes: [
+                {giftId: 1, giftName: "Тестовый подарок", value: 10, date: new Date().toISOString()}
+            ]
+        };
+        
+        // Обновляем UI с тестовыми данными
+        updateProfileUI();
     }
 });
 
@@ -146,27 +168,14 @@ function getUserDataFromTelegram() {
     }
 }
 
-// Функция для попытки получения профиля через API бота
+// Улучшенная функция получения данных пользователя через API
 function tryToGetProfileFromBotAPI() {
-    console.log("Попытка получения профиля через API бота...");
-    console.log("tg доступен:", !!tg);
-    console.log("initData доступен:", !!tg.initData);
-    console.log("initData содержит:", tg.initData ? tg.initData.substring(0, 50) + "..." : "пусто");
+    console.log("Получение профиля через API...");
     
-    // Если нет доступа к Telegram WebApp, не делаем запрос
-    if (!tg) {
-        console.error("Telegram WebApp не доступен");
+    if (!tg || !tg.initData || tg.initData.length < 10) {
+        console.error("Невозможно получить профиль: данные инициализации недоступны");
         return;
     }
-    
-    // ИСПРАВЛЕНИЕ: Проверяем не только наличие tg.initData, но и что оно не пустое
-    if (!tg.initData || tg.initData.length < 10) {
-        console.error("initData недоступен или пуст");
-        console.error("Возможно, вы открыли приложение не через Telegram");
-        return;
-    }
-    
-    console.log("Отправка запроса на получение профиля с initData");
     
     fetch('/api/telegram/get-profile', {
         method: 'POST',
@@ -186,53 +195,63 @@ function tryToGetProfileFromBotAPI() {
     .then(data => {
         console.log("Данные профиля от API бота:", data);
         
-        // Обновляем данные пользователя
+        // Обновляем данные пользователя, если они доступны
         if (data.telegram) {
-            if (data.telegram.id) {
-                userData.id = data.telegram.id;
-            }
-            
-            if (data.telegram.first_name) {
-                userData.name = data.telegram.first_name + 
-                    (data.telegram.last_name ? ' ' + data.telegram.last_name : '');
-            }
-            
-            if (data.telegram.username) {
-                userData.username = data.telegram.username;
-            }
-            
-            if (data.telegram.photo_url) {
-                const avatar = document.getElementById('user-avatar');
-                if (avatar) {
-                    avatar.src = data.telegram.photo_url;
-                    console.log("Установлен аватар из API бота:", data.telegram.photo_url);
-                }
-            }
-            
-            // Обновляем UI
-            updateProfileUI();
-        }
-        
-        // Если пришли данные приложения, обновляем баланс и призы
-        if (data.app_data) {
-            userData.balance = data.app_data.balance;
-            
-            if (Array.isArray(data.app_data.prizes)) {
-                userData.prizes = data.app_data.prizes;
-            }
-            
-            // Обновляем UI
-            updateProfileUI();
+            updateUserInfoFromResponse(data);
         }
     })
     .catch(error => {
         console.error("Ошибка при получении профиля через API бота:", error);
-        // Показываем сообщение пользователю для отладки
-        if (tg.showAlert) {
-            tg.showAlert("Ошибка получения данных: " + error.message + 
-                         "\n\nПроверьте консоль для деталей.");
+        
+        // Логируем детали инициализации для отладки
+        console.log("tg.initData (первые 50 символов):", tg.initData.substring(0, 50));
+        console.log("tg.initDataUnsafe доступен:", !!tg.initDataUnsafe);
+        
+        // Показываем сообщение пользователю
+        if (tg && tg.showAlert) {
+            tg.showAlert("Не удалось получить данные профиля. Пожалуйста, попробуйте позже.");
         }
     });
+}
+
+// Вспомогательная функция для обновления данных пользователя из ответа API
+function updateUserInfoFromResponse(data) {
+    // Обновляем данные из Telegram
+    if (data.telegram) {
+        if (data.telegram.id) {
+            userData.id = data.telegram.id;
+        }
+        
+        if (data.telegram.first_name) {
+            userData.name = data.telegram.first_name + 
+                (data.telegram.last_name ? ' ' + data.telegram.last_name : '');
+        }
+        
+        if (data.telegram.username) {
+            userData.username = data.telegram.username;
+        }
+        
+        // Обновляем аватар, если он доступен
+        if (data.telegram.photo_url) {
+            const avatar = document.getElementById('user-avatar');
+            if (avatar) {
+                avatar.src = data.telegram.photo_url;
+                console.log("Установлен аватар из API:", data.telegram.photo_url);
+            }
+        }
+    }
+    
+    // Обновляем данные приложения
+    if (data.app_data) {
+        userData.balance = data.app_data.balance || 0;
+        
+        if (Array.isArray(data.app_data.prizes)) {
+            userData.prizes = data.app_data.prizes;
+        }
+    }
+    
+    // Обновляем UI
+    updateProfileUI();
 }
 
 // Функция для отдельного запроса аватара - улучшенная версия

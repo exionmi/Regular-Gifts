@@ -7,9 +7,28 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Regular Gifts</title>
-    <!-- Подключаем тестовый режим перед Telegram WebApp (закомментируйте для реальной работы в Telegram) -->
-    <script src="test-mode.js"></script>
+    
+    <!-- Условное подключение тестового режима -->
+    <script>
+        // Проверяем условия для тестового режима
+        const enableTestMode = 
+            // Если есть параметр test=true в URL
+            new URLSearchParams(window.location.search).get('test') === 'true' || 
+            // Если мы на локальном хосте и нет Telegram в window
+            ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && 
+             typeof window.Telegram === 'undefined');
+        
+        // Динамически добавляем скрипт тестового режима, если нужно
+        if (enableTestMode) {
+            document.write('<script src="test-mode.js"><\/script>');
+            console.log("Тестовый режим активирован");
+        }
+    </script>
+    
+    <!-- Скрипт Telegram WebApp -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Стили приложения -->
     <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
@@ -66,9 +85,19 @@
         </div>
     </div>
     <!-- Подключаем скрипты -->
-    <script src="wheel.js?v=2"></script>
-    <script src="app.js?v=2"></script>
-    <script src="telegram_debug.js"></script>
+    <script src="wheel.js?v=3"></script>
+    <script src="app.js?v=3"></script>
+    
+    <!-- Отладочные скрипты (добавляются только в режиме разработки) -->
+    <script>
+        // Проверяем, в режиме ли разработки
+        if (enableTestMode || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            const debugScript = document.createElement('script');
+            debugScript.src = 'telegram_debug.js';
+            document.body.appendChild(debugScript);
+            console.log("Режим отладки активирован");
+        }
+    </script>
 </body>
 </html>
 
