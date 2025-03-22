@@ -2,14 +2,16 @@
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// Добавим отладочную информацию
+// Отладочная информация для диагностики проблемы
 console.log("Инициализация WebApp...");
-console.log("WebApp данные:", tg.initDataUnsafe);
+console.log("Telegram WebApp доступен:", !!tg);
+console.log("initDataUnsafe доступен:", !!tg.initDataUnsafe);
 
 // Переменные для хранения данных пользователя
 let userData = {
     id: null,
     name: "Гость",
+    username: "NoUsername",
     balance: 0,
     prizes: []
 };
@@ -26,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('spin-btn').addEventListener('click', spinWheel);
     
     // Получаем данные пользователя
-    getUserData();
+    getUserDataFromTelegram();
 });
 
 // Функция для настройки вкладок
@@ -54,92 +56,112 @@ function setupTabs() {
     });
 }
 
-// Улучшенная функция получения данных пользователя из Telegram
-function getUserData() {
-    console.log("Получение данных пользователя через Python/aiogram...");
+// Функция для получения данных пользователя напрямую из Telegram WebApp
+function getUserDataFromTelegram() {
+    console.log("Получение данных пользователя из Telegram WebApp...");
     
-    const tg = window.Telegram.WebApp;
+    if (!tg || !tg.initDataUnsafe) {
+        console.error("Telegram WebApp API недоступен или initDataUnsafe не определен");
+        updateProfileUI(); // Показываем UI с данными по умолчанию
+        return;
+    }
     
-    if (!tg) {
-        console.error("Telegram WebApp API недоступен");
+    // Получаем данные пользователя из объекта initDataUnsafe
+    const userInfo = tg.initDataUnsafe.user;
+    
+    if (!userInfo) {
+        console.error("Данные пользователя недоступны в Telegram WebApp");
         updateProfileUI();
         return;
     }
     
-    // Проверяем наличие initData
-    if (!tg.initData) {
-        console.warn("initData отсутствует, невозможно получить профиль");
-        updateProfileUI();
+    console.log("Данные пользователя получены из Telegram:", userInfo);
+    
+    // Обновляем локальные данные
+    userData.id = userInfo.id;
+    userData.name = userInfo.first_name + (userInfo.last_name ? ' ' + userInfo.last_name : '');
+    userData.username = userInfo.username || "NoUsername";
+    
+    // Запрашиваем данные баланса и призов с сервера
+    fetchUserDataFromServer(userInfo.id);
+    
+    // Обновляем UI с полученными данными
+    updateProfileUI();
+}
+
+// Обновленная функция для получения данных с сервера
+function fetchUserDataFromServer(userId) {
+    if (!userId) {
+        console.warn("ID пользователя не определен, не выполняем запрос");
         return;
     }
     
-    // Получаем данные профиля через Python API с использованием aiogram
-    fetch('/api/telegram/get-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ init_data: tg.initData })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP ошибка: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log("Данные профиля получены:", data);
-        
-        // Обновляем локальные данные пользователя
-        if (data.telegram) {
-            userData.id = data.telegram.user_id;
-            userData.name = data.telegram.first_name + 
-                (data.telegram.last_name ? ' ' + data.telegram.last_name : '');
-            userData.username = data.telegram.username || "NoUsername";
-                
-            // Отображаем имя пользователя
-            const nameElement = document.getElementById('user-name');
-            if (nameElement) {
-                nameElement.textContent = userData.name;
+    console.log("Запрос данных с сервера для пользователя:", userId);
+    
+    // Формируем URL-запрос
+    const url = `/api/user-data?userId=${userId}`;
+    
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ошибка: ${response.status}`);
             }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Данные получены с сервера:", data);
             
-            // Отображаем username
-            const usernameElement = document.getElementById('user-username');
-            if (usernameElement) {
-                usernameElement.textContent = '@' + userData.username;
-            }
+            // Обновляем баланс и историю призов
+            userData.balance = data.balance || 0;
+            userData.prizes = Array.isArray(data.prizes) ? data.prizes : [];
             
-            // Отображаем аватар пользователя
-            if (data.telegram.photo_url) {
-                const avatarElement = document.getElementById('user-avatar');
-                if (avatarElement) {
-                    avatarElement.src = data.telegram.photo_url;
-                    console.log("Аватар установлен:", data.telegram.photo_url);
-                }
-            } else {
-                // Если аватарки нет в данных, делаем отдельный запрос
-                tryGetAvatarSeparately();
-            }
+            // Обновляем интерфейс
+            updateProfileUI();
+        })
+        .catch(error => {
+            console.error("Ошибка при получении данных с сервера:", error);
+        });
+}
+
+// Обновленная функция обновления UI профиля
+function updateProfileUI() {
+    console.log("Обновление UI профиля с данными:", userData);
+    
+    // Обновляем имя пользователя
+    const nameElement = document.getElementById('user-name');
+    if (nameElement) {
+        nameElement.textContent = userData.name || 'Гость';
+    }
+    
+    // Обновляем username
+    const usernameElement = document.getElementById('user-username');
+    if (usernameElement) {
+        usernameElement.textContent = userData.username ? '@' + userData.username : '';
+    }
+    
+    // Обновляем баланс
+    const balanceElement = document.getElementById('user-stars');
+    if (balanceElement) {
+        balanceElement.textContent = userData.balance;
+    }
+    
+    // Обновляем аватар, если доступен
+    const userAvatar = document.getElementById('user-avatar');
+    if (userAvatar) {
+        // Если есть аватар в данных Telegram
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url) {
+            userAvatar.src = tg.initDataUnsafe.user.photo_url;
+            userAvatar.onerror = function() {
+                // В случае ошибки загрузки аватара
+                userAvatar.src = "images/default-avatar.png";
+            };
+        } else {
+            userAvatar.src = "images/default-avatar.png";
         }
-        
-        // Обновляем данные приложения
-        if (data.app_data) {
-            userData.balance = data.app_data.balance || 0;
-            userData.prizes = Array.isArray(data.app_data.prizes) ? 
-                data.app_data.prizes : [];
-                
-            // Отображаем баланс
-            const balanceElement = document.getElementById('user-stars');
-            if (balanceElement) {
-                balanceElement.textContent = userData.balance;
-            }
-            
-            // Обновляем историю призов
-            updatePrizesHistory();
-        }
-    })
-    .catch(error => {
-        console.error("Ошибка при получении профиля:", error);
-        updateProfileUI(); // Показываем интерфейс с имеющимися данными
-    });
+    }
+    
+    // Обновляем историю выигрышей
+    updatePrizesHistory();
 }
 
 // Функция для получения данных пользователя с сервера
