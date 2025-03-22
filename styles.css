@@ -293,6 +293,15 @@ body {
     justify-content: center;
 }
 
+/* Стиль для отображения username */
+.username-text {
+    color: #666;
+    font-size: 16px;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
 .balance {
     display: flex;
     align-items: center;

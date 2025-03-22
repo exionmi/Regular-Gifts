@@ -93,11 +93,18 @@ function getUserData() {
             userData.id = data.telegram.user_id;
             userData.name = data.telegram.first_name + 
                 (data.telegram.last_name ? ' ' + data.telegram.last_name : '');
+            userData.username = data.telegram.username || "NoUsername";
                 
             // Отображаем имя пользователя
             const nameElement = document.getElementById('user-name');
             if (nameElement) {
                 nameElement.textContent = userData.name;
+            }
+            
+            // Отображаем username
+            const usernameElement = document.getElementById('user-username');
+            if (usernameElement) {
+                usernameElement.textContent = '@' + userData.username;
             }
             
             // Отображаем аватар пользователя
@@ -107,6 +114,9 @@ function getUserData() {
                     avatarElement.src = data.telegram.photo_url;
                     console.log("Аватар установлен:", data.telegram.photo_url);
                 }
+            } else {
+                // Если аватарки нет в данных, делаем отдельный запрос
+                tryGetAvatarSeparately();
             }
         }
         
@@ -251,11 +261,16 @@ function updateProfileWithServerData(profileData) {
     }
 }
 
-// Функция для отдельного запроса аватара
+// Функция для отдельного запроса аватара - улучшенная версия
 function tryGetAvatarSeparately() {
     const tg = window.Telegram.WebApp;
     
-    if (!tg.initData) return;
+    if (!tg || !tg.initData) {
+        console.warn("Невозможно получить аватар: initData недоступен");
+        return;
+    }
+    
+    console.log("Пытаемся получить аватар отдельным запросом...");
     
     fetch('/api/telegram/get-avatar', {
         method: 'POST',
@@ -268,17 +283,48 @@ function tryGetAvatarSeparately() {
     })
     .then(response => response.json())
     .then(data => {
+        console.log("Ответ API аватара:", data);
+        
         if (data.photo_url) {
             const avatarElement = document.getElementById('user-avatar');
             if (avatarElement) {
                 avatarElement.src = data.photo_url;
+                avatarElement.onerror = function() {
+                    console.warn("Ошибка загрузки аватара, создаем placeholder");
+                    createInitialsAvatar(document.querySelector('.avatar-container'));
+                };
                 console.log("Установлен аватар из отдельного запроса:", data.photo_url);
             }
+        } else {
+            // Если нет аватара, создаем placeholder
+            createInitialsAvatar(document.querySelector('.avatar-container'));
         }
     })
     .catch(error => {
         console.error("Ошибка при получении аватара:", error);
+        createInitialsAvatar(document.querySelector('.avatar-container'));
     });
+}
+
+// Обновленная функция для обновления UI профиля
+function updateProfileUI() {
+    // Обновляем имя пользователя
+    document.getElementById('user-name').textContent = userData.name || 'Гость';
+    
+    // Обновляем username если элемент существует
+    const usernameElement = document.getElementById('user-username');
+    if (usernameElement) {
+        usernameElement.textContent = userData.username ? '@' + userData.username : '';
+    }
+    
+    // Обновляем баланс
+    document.getElementById('user-stars').textContent = userData.balance;
+    
+    // Обновляем аватар
+    updateUserAvatar();
+    
+    // Обновляем историю выигрышей
+    updatePrizesHistory();
 }
 
 // Функция для обновления UI профиля
