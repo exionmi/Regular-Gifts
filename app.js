@@ -8,7 +8,8 @@ let userData = {
     name: "Гость",
     username: "NoUsername",
     balance: 0,
-    prizes: []
+    prizes: [],
+    photo_url: null
 };
 
 // Инициализация Telegram WebApp с корректной обработкой готовности
@@ -24,32 +25,33 @@ function initTelegramWebApp() {
             return false;
         }
         
-        // Регистрируем обработчик события готовности
-        tg.onReady(function() {
-            console.log("Telegram WebApp готов к использованию");
-            
-            // Проверяем доступность initData после готовности WebApp
-            if (tg.initData && tg.initData.length > 10) {
-                console.log("initData доступен:", tg.initData.substring(0, 30) + "...");
-                initDataAvailable = true;
-            } else {
-                console.warn("initData недоступен или некорректен");
-                console.warn("Длина initData:", tg.initData ? tg.initData.length : 0);
-            }
-            
-            // Получаем данные пользователя после готовности WebApp
-            getUserDataFromTelegram();
-            
-            // Получаем профиль через API только если initData доступен
-            if (initDataAvailable) {
-                tryToGetProfileFromBotAPI();
-            } else {
-                console.warn("Пропускаем запрос профиля из-за отсутствия initData");
-            }
-            
-            // Расширяем окно WebApp
-            tg.expand();
-        });
+        // ИСПРАВЛЕНО: вместо tg.onReady используем правильный метод
+        // Указываем Telegram, что приложение готово к работе
+        tg.ready();
+        
+        console.log("Telegram WebApp готов к использованию");
+        
+        // Проверяем доступность initData
+        if (tg.initData && tg.initData.length > 10) {
+            console.log("initData доступен:", tg.initData.substring(0, 30) + "...");
+            initDataAvailable = true;
+        } else {
+            console.warn("initData недоступен или некорректен");
+            console.warn("Длина initData:", tg.initData ? tg.initData.length : 0);
+        }
+        
+        // Получаем данные пользователя после инициализации
+        getUserDataFromTelegram();
+        
+        // Получаем профиль через API только если initData доступен
+        if (initDataAvailable) {
+            tryToGetProfileFromBotAPI();
+        } else {
+            console.warn("Пропускаем запрос профиля из-за отсутствия initData");
+        }
+        
+        // Расширяем окно WebApp
+        tg.expand();
         
         return true;
     } catch (e) {
@@ -138,6 +140,12 @@ function getUserDataFromTelegram() {
     userData.id = user.id;
     userData.name = user.first_name + (user.last_name ? ' ' + user.last_name : '');
     userData.username = user.username || "NoUsername";
+    
+    // ИСПРАВЛЕНО: Сохраняем URL аватара из данных Telegram
+    if (user.photo_url) {
+        userData.photo_url = user.photo_url;
+        console.log("Получен URL аватара из Telegram:", userData.photo_url);
+    }
     
     // Обновляем интерфейс
     updateProfileUI();
@@ -231,13 +239,10 @@ function updateUserInfoFromResponse(data) {
             userData.username = data.telegram.username;
         }
         
-        // Обновляем аватар, если он доступен
+        // ИСПРАВЛЕНО: Обновляем аватар в объекте userData
         if (data.telegram.photo_url) {
-            const avatar = document.getElementById('user-avatar');
-            if (avatar) {
-                avatar.src = data.telegram.photo_url;
-                console.log("Установлен аватар из API:", data.telegram.photo_url);
-            }
+            userData.photo_url = data.telegram.photo_url;
+            console.log("Получен URL аватара из API:", userData.photo_url);
         }
     }
     
@@ -332,7 +337,7 @@ function updateProfileUI() {
     updatePrizesHistory();
 }
 
-// Функция для обновления аватара
+// ИСПРАВЛЕНО: Функция для обновления аватара
 function updateAvatar() {
     const avatarElement = document.getElementById('user-avatar');
     if (!avatarElement) {
@@ -340,20 +345,27 @@ function updateAvatar() {
         return;
     }
     
-    // Если есть аватар в данных пользователя
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url) {
+    // Используем фото из Telegram или из объекта userData
+    // Проверяем в таком порядке:
+    // 1. Фото из данных userData (могло прийти с сервера)
+    // 2. Фото из Telegram WebApp
+    // 3. Дефолтный аватар
+    if (userData.photo_url) {
+        avatarElement.src = userData.photo_url;
+        console.log("Установлен аватар из userData:", userData.photo_url);
+    } else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url) {
         avatarElement.src = tg.initDataUnsafe.user.photo_url;
-        console.log("Установлен аватар из данных Telegram");
+        console.log("Установлен аватар из данных Telegram:", tg.initDataUnsafe.user.photo_url);
     } else {
-        // Если аватара нет, используем заглушку
         avatarElement.src = "images/default-avatar.png";
-        console.log("Установлен аватар по умолчанию");
+        console.log("Установлен аватар по умолчанию (нет фото в Telegram)");
     }
     
     // Обработчик ошибки загрузки аватара
     avatarElement.onerror = function() {
+        console.warn("Ошибка загрузки аватара:", this.src);
         this.src = "images/default-avatar.png";
-        console.warn("Ошибка загрузки аватара, используем заглушку");
+        console.warn("Используем аватар по умолчанию вместо недоступного");
     };
 }
 
