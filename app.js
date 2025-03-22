@@ -12,7 +12,7 @@ let userData = {
     photo_url: null
 };
 
-// Инициализация Telegram WebApp с корректной обработкой готовности
+// Улучшенная инициализация Telegram WebApp
 function initTelegramWebApp() {
     console.log("Инициализация Telegram WebApp...");
     
@@ -25,25 +25,24 @@ function initTelegramWebApp() {
             return false;
         }
         
-        // ИСПРАВЛЕНО: вместо tg.onReady используем правильный метод
-        // Указываем Telegram, что приложение готово к работе
+        // Сообщаем Telegram, что приложение готово к работе
         tg.ready();
-        
         console.log("Telegram WebApp готов к использованию");
         
-        // Проверяем доступность initData
+        // Проверяем доступность initData после сигнала готовности
         if (tg.initData && tg.initData.length > 10) {
-            console.log("initData доступен:", tg.initData.substring(0, 30) + "...");
+            console.log("initData доступен, длина:", tg.initData.length);
+            console.log("Первые 50 символов:", tg.initData.substring(0, 50));
             initDataAvailable = true;
         } else {
-            console.warn("initData недоступен или некорректен");
+            console.warn("initData недоступен или некорректен:", tg.initData);
             console.warn("Длина initData:", tg.initData ? tg.initData.length : 0);
         }
         
-        // Получаем данные пользователя после инициализации
+        // Только после инициализации получаем данные пользователя
         getUserDataFromTelegram();
         
-        // Получаем профиль через API только если initData доступен
+        // Запрашиваем профиль через API только если initData доступен
         if (initDataAvailable) {
             tryToGetProfileFromBotAPI();
         } else {
