@@ -1,14 +1,55 @@
+// Инициализация Telegram WebApp и переменных для хранения данных
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+// Переменные для хранения данных пользователя
+let userData = {
+    id: null,
+    name: "Гость",
+    username: "NoUsername",
+    balance: 0,
+    prizes: []
+};
+
+// Инициализация приложения
+document.addEventListener("DOMContentLoaded", function() {
+    // Создаем колесо
+    createWheel();
+    
+    // Настраиваем обработчики вкладок
+    setupTabs();
+    
+    // Настраиваем кнопку вращения
+    document.getElementById('spin-btn').addEventListener('click', spinWheel);
+    
+    // Получаем данные пользователя - добавляем вызов функции получения профиля
+    getUserDataFromTelegram();
+    
+    // Добавляем вызов функции для получения профиля через API
+    tryToGetProfileFromBotAPI();
+});
+
 // Функция для попытки получения профиля через API бота
 function tryToGetProfileFromBotAPI() {
-    const tg = window.Telegram.WebApp;
+    console.log("Попытка получения профиля через API бота...");
+    console.log("tg доступен:", !!tg);
+    console.log("initData доступен:", !!tg.initData);
+    console.log("initData содержит:", tg.initData ? tg.initData.substring(0, 50) + "..." : "пусто");
     
     // Если нет доступа к Telegram WebApp, не делаем запрос
-    if (!tg || !tg.initData) {
+    if (!tg) {
         console.error("Telegram WebApp не доступен");
         return;
     }
     
-    console.log("Пытаемся получить профиль с initData");
+    // ИСПРАВЛЕНИЕ: Проверяем не только наличие tg.initData, но и что оно не пустое
+    if (!tg.initData || tg.initData.length < 10) {
+        console.error("initData недоступен или пуст");
+        console.error("Возможно, вы открыли приложение не через Telegram");
+        return;
+    }
+    
+    console.log("Отправка запроса на получение профиля с initData");
     
     fetch('/api/telegram/get-profile', {
         method: 'POST',
@@ -69,6 +110,11 @@ function tryToGetProfileFromBotAPI() {
     })
     .catch(error => {
         console.error("Ошибка при получении профиля через API бота:", error);
+        // Показываем сообщение пользователю для отладки
+        if (tg.showAlert) {
+            tg.showAlert("Ошибка получения данных: " + error.message + 
+                         "\n\nПроверьте консоль для деталей.");
+        }
     });
 }
 
